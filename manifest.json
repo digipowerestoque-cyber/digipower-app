@@ -1,0 +1,15 @@
+{
+  "name": "Estoque · DigiPower",
+  "short_name": "Estoque DigiPower",
+  "description": "Gestão de estoque da DigiPower: movimentação, inventário, OP, etiquetas Zebra e cartões Kanban",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0E0E0F",
+  "theme_color": "#0E0E0F",
+  "icons": [
+    { "src": "icone_digipower_512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icone_digipower_512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
