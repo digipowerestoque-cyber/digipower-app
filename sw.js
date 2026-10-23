@@ -8,7 +8,7 @@
  *  inventários e fila vêm sempre do servidor, ao vivo. Aqui só ficam a casca
  *  da página e as imagens, para abrir rápido.
  * ========================================================================== */
-var VERSAO = 'estoque-digipower-v1';
+var VERSAO = 'estoque-digipower-v2';
 var CASCA = ['./', './index.html', './manifest.json', './icone_digipower_512.png', './logo_digipower_negativo.png'];
 
 self.addEventListener('install', function (e) {

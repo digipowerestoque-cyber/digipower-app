@@ -14,7 +14,11 @@
 <meta name="apple-mobile-web-app-title" content="Estoque DigiPower">
 <meta name="robots" content="noindex, nofollow">
 <!--
-  ESTOQUE DIGIPOWER · PÁGINA DE ABERTURA V1.0 (GitHub Pages)   Decisão Consultoria
+  ESTOQUE DIGIPOWER · PÁGINA DE ABERTURA V1.1 (GitHub Pages)   Decisão Consultoria
+  V1.1: faz a ponte com a Zebra. Dentro do quadro do Google o Chrome não deixa o
+  app falar com o Zebra Browser Print (rede local); esta página, que é a de
+  cima, faz a chamada e devolve a resposta. Só aceita endereços do Browser
+  Print neste computador (127.0.0.1 / localhost, portas 9100 e 9101).
   Abre o aplicativo do Apps Script em tela cheia, sem a faixa do Google, e
   permite instalar o app (ícone na tela inicial do celular e na área de
   trabalho do PC). Não guarda nenhum dado do sistema.
@@ -55,6 +59,25 @@
       if (navigator.setAppBadge) { if (d.n > 0) { navigator.setAppBadge(d.n); } else { navigator.clearAppBadge(); } }
       document.title = (d.n > 0 ? '(' + d.n + ') ' : '') + 'Estoque · DigiPower';
     } catch (e) { /* navegador sem suporte */ }
+  });
+
+  /* Ponte com o Zebra Browser Print */
+  window.addEventListener('message', function (ev) {
+    var d = ev.data;
+    if (!d || !d.tipo || !ev.source) { return; }
+    if (!/(^https:\/\/[\w.-]+\.googleusercontent\.com$)|(^https:\/\/script\.google\.com$)/.test(ev.origin)) { return; }
+    if (d.tipo === 'ponte_ping') { ev.source.postMessage({ tipo: 'ponte_ok', versao: '1.1' }, '*'); return; }
+    if (d.tipo !== 'zebra_req') { return; }
+    var responder = function (r) { r.tipo = 'zebra_resp'; r.id = d.id; ev.source.postMessage(r, '*'); };
+    if (!/^https?:\/\/(127\.0\.0\.1|localhost):910[01]\//.test(String(d.url))) { responder({ ok: null, erro: 'endereço não permitido' }); return; }
+    var ctl = ('AbortController' in window) ? new AbortController() : null;
+    var t = setTimeout(function () { if (ctl) { ctl.abort(); } }, d.ms || 4000);
+    var op = { method: d.metodo || 'GET' };
+    if (ctl) { op.signal = ctl.signal; }
+    if (d.corpo) { op.body = d.corpo; op.headers = { 'Content-Type': 'text/plain;charset=UTF-8' }; }
+    fetch(d.url, op).then(function (r) {
+      return r.text().then(function (tx) { clearTimeout(t); responder({ ok: r.ok, status: r.status, texto: tx }); });
+    }).catch(function (e) { clearTimeout(t); responder({ ok: null, erro: String((e && e.message) || e) }); });
   });
 
   /* Service worker: é o que faz o Chrome oferecer "Instalar aplicativo". */
