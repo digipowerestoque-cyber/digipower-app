@@ -14,7 +14,9 @@
 <meta name="apple-mobile-web-app-title" content="Estoque DigiPower">
 <meta name="robots" content="noindex, nofollow">
 <!--
-  ESTOQUE DIGIPOWER · PÁGINA DE ABERTURA V1.1 (GitHub Pages)   Decisão Consultoria
+  ESTOQUE DIGIPOWER · PÁGINA DE ABERTURA V1.2 (GitHub Pages)   Decisão Consultoria
+  V1.2: aviso do Windows de nova requisição de compra. O app pede, esta página
+  mostra (dentro do quadro do Google o Chrome não deixa pedir permissão).
   V1.1: faz a ponte com a Zebra. Dentro do quadro do Google o Chrome não deixa o
   app falar com o Zebra Browser Print (rede local); esta página, que é a de
   cima, faz a chamada e devolve a resposta. Só aceita endereços do Browser
@@ -66,7 +68,7 @@
     var d = ev.data;
     if (!d || !d.tipo || !ev.source) { return; }
     if (!/(^https:\/\/[\w.-]+\.googleusercontent\.com$)|(^https:\/\/script\.google\.com$)/.test(ev.origin)) { return; }
-    if (d.tipo === 'ponte_ping') { ev.source.postMessage({ tipo: 'ponte_ok', versao: '1.1' }, '*'); return; }
+    if (d.tipo === 'ponte_ping') { ev.source.postMessage({ tipo: 'ponte_ok', versao: '1.2' }, '*'); return; }
     if (d.tipo !== 'zebra_req') { return; }
     var responder = function (r) { r.tipo = 'zebra_resp'; r.id = d.id; ev.source.postMessage(r, '*'); };
     if (!/^https?:\/\/(127\.0\.0\.1|localhost):910[01]\//.test(String(d.url))) { responder({ ok: null, erro: 'endereço não permitido' }); return; }
@@ -78,6 +80,33 @@
     fetch(d.url, op).then(function (r) {
       return r.text().then(function (tx) { clearTimeout(t); responder({ ok: r.ok, status: r.status, texto: tx }); });
     }).catch(function (e) { clearTimeout(t); responder({ ok: null, erro: String((e && e.message) || e) }); });
+  });
+
+  /* V1.2 · Aviso do Windows (notificação) pedido pelo app */
+  var _app = null;
+  var respNotif = function (alvo, pedido) {
+    try { alvo.postMessage({ tipo: 'notif_resp', permissao: ('Notification' in window) ? Notification.permission : 'sem_suporte', pedido: !!pedido }, '*'); } catch (e) { /* nada */ }
+  };
+  window.addEventListener('message', function (ev) {
+    var d = ev.data;
+    if (!d || !d.tipo || !ev.source) { return; }
+    if (!/(^https:\/\/[\w.-]+\.googleusercontent\.com$)|(^https:\/\/script\.google\.com$)/.test(ev.origin)) { return; }
+    if (d.tipo !== 'notif_estado' && d.tipo !== 'notif_pedir' && d.tipo !== 'notificar') { return; }
+    _app = ev.source;
+    if (!('Notification' in window)) { respNotif(ev.source); return; }
+    if (d.tipo === 'notif_estado') { respNotif(ev.source); return; }
+    if (d.tipo === 'notif_pedir') {
+      var p = Notification.requestPermission(function () { respNotif(ev.source, true); });
+      if (p && p.then) { p.then(function () { respNotif(ev.source, true); }); }
+      return;
+    }
+    if (Notification.permission !== 'granted') { return; }
+    try {
+      var n = new Notification(String(d.titulo || 'Estoque DigiPower').substring(0, 120), {
+        body: String(d.corpo || '').substring(0, 300), icon: 'icone_digipower_512.png', badge: 'icone_digipower_512.png',
+        tag: String(d.tag || ''), requireInteraction: !!d.urgente });
+      n.onclick = function () { try { window.focus(); if (_app) { _app.postMessage({ tipo: 'abrir_tela', tela: 'req' }, '*'); } } catch (e) { /* nada */ } n.close(); };
+    } catch (e) { /* navegador sem suporte */ }
   });
 
   /* Service worker: é o que faz o Chrome oferecer "Instalar aplicativo". */
