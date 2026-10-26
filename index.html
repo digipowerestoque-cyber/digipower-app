@@ -14,7 +14,8 @@
 <meta name="apple-mobile-web-app-title" content="Estoque DigiPower">
 <meta name="robots" content="noindex, nofollow">
 <!--
-  ESTOQUE DIGIPOWER · PÁGINA DE ABERTURA V1.3 (GitHub Pages)   Decisão Consultoria
+  ESTOQUE DIGIPOWER · PÁGINA DE ABERTURA V1.4 (GitHub Pages)   Decisão Consultoria
+  V1.4: quando sai versão nova do aplicativo, o app pede e esta página recarrega sozinha.
   V1.3: o aviso do Windows serve também à fila de impressão; o clique abre a tela certa.
   V1.2: aviso do Windows de nova requisição de compra. O app pede, esta página
   mostra (dentro do quadro do Google o Chrome não deixa pedir permissão).
@@ -69,7 +70,7 @@
     var d = ev.data;
     if (!d || !d.tipo || !ev.source) { return; }
     if (!/(^https:\/\/[\w.-]+\.googleusercontent\.com$)|(^https:\/\/script\.google\.com$)/.test(ev.origin)) { return; }
-    if (d.tipo === 'ponte_ping') { ev.source.postMessage({ tipo: 'ponte_ok', versao: '1.3' }, '*'); return; }
+    if (d.tipo === 'ponte_ping') { ev.source.postMessage({ tipo: 'ponte_ok', versao: '1.4' }, '*'); return; }
     if (d.tipo !== 'zebra_req') { return; }
     var responder = function (r) { r.tipo = 'zebra_resp'; r.id = d.id; ev.source.postMessage(r, '*'); };
     if (!/^https?:\/\/(127\.0\.0\.1|localhost):910[01]\//.test(String(d.url))) { responder({ ok: null, erro: 'endereço não permitido' }); return; }
@@ -92,6 +93,7 @@
     var d = ev.data;
     if (!d || !d.tipo || !ev.source) { return; }
     if (!/(^https:\/\/[\w.-]+\.googleusercontent\.com$)|(^https:\/\/script\.google\.com$)/.test(ev.origin)) { return; }
+    if (d.tipo === 'recarregar') { setTimeout(function () { location.reload(); }, 150); return; }
     if (d.tipo !== 'notif_estado' && d.tipo !== 'notif_pedir' && d.tipo !== 'notificar') { return; }
     _app = ev.source;
     if (!('Notification' in window)) { respNotif(ev.source); return; }
